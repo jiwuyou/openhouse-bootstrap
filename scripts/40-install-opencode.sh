@@ -41,13 +41,15 @@ mkdir -p "$HOME/product-links" "$HOME/workspace"
 printf "%s\n" "/data/data/com.termux/files/home/product-docs" > "$HOME/product-links/docs-path.txt"
 printf "%s\n" "/data/data/com.termux/files/home/workspace" > "$HOME/product-links/workspace-path.txt"
 PATH_LINE="export PATH=\"\$HOME/.opencode/bin:\$HOME/.local/bin:\$HOME/.npm-global/bin:\$PATH\""
-touch "$HOME/.profile"
-if ! grep -Fq "$PATH_LINE" "$HOME/.profile"; then
-  {
-    printf "\n# OpenHouse agent tools\n"
-    printf "%s\n" "$PATH_LINE"
-  } >> "$HOME/.profile"
-fi
+for PROFILE_FILE in "$HOME/.profile" "$HOME/.bashrc"; do
+  touch "$PROFILE_FILE"
+  if ! grep -Fq "$PATH_LINE" "$PROFILE_FILE"; then
+    {
+      printf "\n# OpenHouse agent tools\n"
+      printf "%s\n" "$PATH_LINE"
+    } >> "$PROFILE_FILE"
+  fi
+done
 echo "文档路径：$(cat "$HOME/product-links/docs-path.txt")"
 echo "工作区路径：$(cat "$HOME/product-links/workspace-path.txt")"'
 
