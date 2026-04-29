@@ -40,6 +40,14 @@ run_logged proot-distro login ubuntu -- bash -lc 'set -euo pipefail
 mkdir -p "$HOME/product-links" "$HOME/workspace"
 printf "%s\n" "/data/data/com.termux/files/home/product-docs" > "$HOME/product-links/docs-path.txt"
 printf "%s\n" "/data/data/com.termux/files/home/workspace" > "$HOME/product-links/workspace-path.txt"
+PATH_LINE="export PATH=\"\$HOME/.opencode/bin:\$HOME/.local/bin:\$HOME/.npm-global/bin:\$PATH\""
+touch "$HOME/.profile"
+if ! grep -Fq "$PATH_LINE" "$HOME/.profile"; then
+  {
+    printf "\n# OpenHouse agent tools\n"
+    printf "%s\n" "$PATH_LINE"
+  } >> "$HOME/.profile"
+fi
 echo "文档路径：$(cat "$HOME/product-links/docs-path.txt")"
 echo "工作区路径：$(cat "$HOME/product-links/workspace-path.txt")"'
 
