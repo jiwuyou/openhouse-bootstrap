@@ -31,14 +31,13 @@ Use a custom OpenCode port:
 OPENHOUSE_PORT=8766 bash bootstrap.sh start
 ```
 
-## Future GitHub One-Line Install
+## GitHub One-Line Install
 
-After publishing this repository, the user-facing command should look like:
+Run this in official Termux:
 
 ```bash
 pkg update -y && pkg install -y curl ca-certificates && \
-curl -fsSL https://raw.githubusercontent.com/YOUR_NAME/openhouse-bootstrap/main/bootstrap.sh -o ~/openhouse-bootstrap.sh && \
-OPENHOUSE_RAW_BASE=https://raw.githubusercontent.com/YOUR_NAME/openhouse-bootstrap/main \
+curl -fsSL https://raw.githubusercontent.com/jiwuyou/openhouse-bootstrap/main/bootstrap.sh -o ~/openhouse-bootstrap.sh && \
 bash ~/openhouse-bootstrap.sh full
 ```
 

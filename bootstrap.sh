@@ -2,7 +2,7 @@
 set -euo pipefail
 
 OPENHOUSE_DIR="${OPENHOUSE_DIR:-$HOME/.openhouse-bootstrap}"
-OPENHOUSE_RAW_BASE="${OPENHOUSE_RAW_BASE:-}"
+OPENHOUSE_RAW_BASE="${OPENHOUSE_RAW_BASE:-https://raw.githubusercontent.com/jiwuyou/openhouse-bootstrap/main}"
 OPENHOUSE_PORT="${OPENHOUSE_PORT:-8765}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -30,7 +30,6 @@ ensure_local_layout() {
     return 0
   fi
 
-  [ -n "$OPENHOUSE_RAW_BASE" ] || die "找不到 scripts/ 目录。若只下载了 bootstrap.sh，请设置 OPENHOUSE_RAW_BASE 后重试。"
   command -v curl >/dev/null 2>&1 || die "缺少 curl，请先运行：pkg install -y curl"
 
   log "正在从 $OPENHOUSE_RAW_BASE 下载阶段脚本"
