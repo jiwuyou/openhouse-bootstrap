@@ -24,17 +24,17 @@
       "stages": ["entry_ubuntu"]
     },
     {
-      "title": "启动 OpenCode",
-      "description": "安装 OpenCode 并启动 4096 端口，让 OpenCode 接手后续 AI 配置。",
-      "stages": ["install_opencode", "install_system_env_skill", "start"]
+      "title": "安装并启动 AI 工具",
+      "description": "安装 OpenCode、Codex、Claude Code，写入 Agent 技能，并启动 4096 端口。",
+      "stages": ["install_opencode", "install_codex", "install_claude_code", "install_system_env_skill", "start"]
     }
   ],
   "sections": [
     {
       "id": "optional_ai_agents",
       "type": "actions",
-      "title": "可选 AI 工具",
-      "description": "OpenCode 启动后，建议先访问 127.0.0.1:4096，让 OpenCode 按 skill 引导你配置。这里保留直接安装入口。",
+      "title": "AI 工具补装与修复",
+      "description": "阶段一键执行会安装 Codex 和 Claude Code。这里保留单独补装、重装和修复入口。",
       "items": [
         {
           "id": "install_codex",
