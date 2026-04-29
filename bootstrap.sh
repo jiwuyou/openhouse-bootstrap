@@ -24,8 +24,16 @@ is_termux() {
   [ -n "${PREFIX:-}" ] && [ -d "${PREFIX:-}/bin" ] && [ -d "/data/data/com.termux/files" ]
 }
 
+is_current_ubuntu() {
+  [ -f /etc/os-release ] && grep -qi '^ID=ubuntu' /etc/os-release
+}
+
 ensure_termux() {
   is_termux || die "请在官方 Termux 内运行，不要在 Android adb shell 或普通 Linux 主机运行。"
+}
+
+ensure_supported_runtime() {
+  is_termux || is_current_ubuntu || die "请在官方 Termux 内运行；Codex、Claude Code 等 agent 安装也可以在 OpenHouse Ubuntu 内运行。"
 }
 
 ensure_local_layout() {
@@ -151,7 +159,7 @@ EOF
 }
 
 main() {
-  ensure_termux
+  ensure_supported_runtime
   ensure_local_layout
 
   case "${1:-}" in
