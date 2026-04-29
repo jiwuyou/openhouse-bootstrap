@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "version": "2026.04.29.1",
+  "title": "OpenHouse 维护器",
+  "sourceName": "OpenHouse 官方维护源",
+  "updatedAt": "2026-04-29",
+  "bootstrapUrl": "https://raw.githubusercontent.com/jiwuyou/openhouse-bootstrap/main/bootstrap.sh",
+  "defaultOneClickAction": "full",
+  "allowedHosts": ["raw.githubusercontent.com"],
+  "stages": [
+    {
+      "id": "prepare",
+      "title": "准备 Termux 环境",
+      "description": "创建产品文档和工作区，安装 curl、git、proot-distro，并写入 Termux 配置。",
+      "action": { "type": "bootstrap", "args": ["prepare"] }
+    },
+    {
+      "id": "termux_packages",
+      "title": "检查 Termux 基础包",
+      "description": "确保 proot-distro、curl、证书和 git 可用。",
+      "action": { "type": "bootstrap", "args": ["prepare"] }
+    },
+    {
+      "id": "install_ubuntu",
+      "title": "安装 Ubuntu",
+      "description": "通过 proot-distro 安装 Ubuntu rootfs，可重复执行。",
+      "action": { "type": "bootstrap", "args": ["ubuntu"] }
+    },
+    {
+      "id": "sync_official_docs",
+      "title": "写入产品路径",
+      "description": "保持产品文档和工作区路径可被 Ubuntu 内 Agent 识别。",
+      "action": { "type": "bootstrap", "args": ["prepare"] }
+    },
+    {
+      "id": "ubuntu_packages",
+      "title": "更新 Ubuntu 软件包",
+      "description": "在 Ubuntu 内安装 curl、git、证书、procps、ripgrep 和 unzip。",
+      "action": { "type": "bootstrap", "args": ["ubuntu-packages"] }
+    },
+    {
+      "id": "install_opencode",
+      "title": "安装 OpenCode",
+      "description": "安装或检查 OpenCode，并持久写入 Agent 工具 PATH。",
+      "action": { "type": "bootstrap", "args": ["opencode"] }
+    },
+    {
+      "id": "install_system_env_skill",
+      "title": "写入 Agent 技能",
+      "description": "写入系统环境说明，以及 OpenCode、Codex、Claude Code 的安装登录配置说明。",
+      "action": { "type": "bootstrap", "args": ["skills"] }
+    },
+    {
+      "id": "start",
+      "title": "启动 OpenCode",
+      "description": "按默认端口启动 OpenCode Web，默认绑定 127.0.0.1。",
+      "action": { "type": "bootstrap", "args": ["start"] }
+    },
+    {
+      "id": "restart",
+      "title": "重启 OpenCode",
+      "description": "重新执行启动动作，用于恢复 OpenCode Web 服务。",
+      "action": { "type": "bootstrap", "args": ["start"] }
+    }
+  ]
+}
