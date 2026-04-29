@@ -16,6 +16,27 @@ set -euo pipefail
 
 export PATH="$HOME/.local/node/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 
+download_with_retry() {
+  local url="$1"
+  local output="$2"
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    echo "下载：$url（第 $attempt 次）"
+    if curl -fL \
+      --connect-timeout 20 \
+      --retry 3 \
+      --retry-delay 2 \
+      --retry-all-errors \
+      --speed-limit 1024 \
+      --speed-time 300 \
+      "$url" -o "$output"; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
 ensure_node_npm() {
   if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
     return 0
@@ -27,13 +48,13 @@ ensure_node_npm() {
   mkdir -p "$NODE_TMP" "$HOME/.local"
 
   echo "正在安装 Node.js 到 $NODE_ROOT"
-  NODE_TARBALL="$(curl -fsSL "$NODE_DIST_BASE/SHASUMS256.txt" | awk '/linux-arm64.tar.gz$/ { print $2; exit }')"
+  NODE_TARBALL="$(curl -fsSL --connect-timeout 20 --retry 3 --retry-delay 2 --retry-all-errors "$NODE_DIST_BASE/SHASUMS256.txt" | awk '/linux-arm64.tar.gz$/ { print $2; exit }')"
   if [ -z "$NODE_TARBALL" ]; then
     echo "未能从 $NODE_DIST_BASE 找到 linux-arm64 Node.js 包。" >&2
     exit 5
   fi
 
-  curl -fL "$NODE_DIST_BASE/$NODE_TARBALL" -o "$NODE_TMP/$NODE_TARBALL"
+  download_with_retry "$NODE_DIST_BASE/$NODE_TARBALL" "$NODE_TMP/$NODE_TARBALL"
   rm -rf "$NODE_ROOT"
   mkdir -p "$NODE_ROOT"
   tar -xzf "$NODE_TMP/$NODE_TARBALL" -C "$NODE_ROOT" --strip-components=1
@@ -42,6 +63,38 @@ ensure_node_npm() {
   export PATH="$NODE_ROOT/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
   node -v
   npm -v
+}
+
+configure_npm_network() {
+  npm config set prefix "$HOME/.npm-global"
+  npm config set registry "${NPM_REGISTRY:-https://registry.npmjs.org/}"
+  npm config set fetch-retries "${OPENHOUSE_NPM_FETCH_RETRIES:-5}"
+  npm config set fetch-retry-mintimeout "${OPENHOUSE_NPM_FETCH_RETRY_MINTIMEOUT:-20000}"
+  npm config set fetch-retry-maxtimeout "${OPENHOUSE_NPM_FETCH_RETRY_MAXTIMEOUT:-120000}"
+  npm config set fetch-timeout "${OPENHOUSE_NPM_FETCH_TIMEOUT:-600000}"
+}
+
+install_npm_global() {
+  local package_name="$1"
+  local attempt
+  local install_timeout="${OPENHOUSE_NPM_INSTALL_TIMEOUT:-7200s}"
+
+  for attempt in 1 2 3; do
+    echo "正在安装 $package_name（第 $attempt 次，最长等待 $install_timeout）"
+    if command -v timeout >/dev/null 2>&1; then
+      if timeout -k 30s "$install_timeout" npm install -g "$package_name" --no-audit --no-fund --loglevel=verbose; then
+        return 0
+      fi
+    elif npm install -g "$package_name" --no-audit --no-fund --loglevel=verbose; then
+      return 0
+    fi
+
+    echo "$package_name 安装失败或超时，准备重试。"
+    sleep $((attempt * 10))
+  done
+
+  echo "$package_name 安装失败，请检查网络或 npm registry。" >&2
+  return 1
 }
 
 ensure_node_npm
@@ -53,8 +106,8 @@ if command -v claude >/dev/null 2>&1; then
 fi
 
 mkdir -p "$HOME/.npm-global/bin"
-npm config set prefix "$HOME/.npm-global"
-npm install -g @anthropic-ai/claude-code
+configure_npm_network
+install_npm_global @anthropic-ai/claude-code
 
 export PATH="$HOME/.local/node/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 command -v claude
