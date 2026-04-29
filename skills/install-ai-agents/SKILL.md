@@ -11,6 +11,8 @@ Use this skill when the operator asks to install, repair, upgrade, authenticate,
 
 Run these tools inside the Ubuntu proot environment. Do not install them into Android system paths. Do not write API keys into scripts, docs, logs, or git-tracked files.
 
+When this skill is being used from OpenCode Web, the shell is normally already inside Ubuntu. In that case, do not require `proot-distro`. Run the npm install commands directly, or run OpenHouse scripts that explicitly support the current Ubuntu context, such as `~/.openhouse-bootstrap/scripts/42-install-codex.sh`.
+
 Expected PATH:
 
 ```bash
