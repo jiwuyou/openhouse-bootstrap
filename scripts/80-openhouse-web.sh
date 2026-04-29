@@ -10,6 +10,7 @@ PID_FILE="$OPENHOUSE_DIR/web.pid"
 LOG_FILE="$OPENHOUSE_DIR/web.log"
 PORT_FILE="$OPENHOUSE_DIR/web-port"
 PORT="${OPENHOUSE_WEB_PORT:-}"
+REQUESTED_PORT="${OPENHOUSE_WEB_PORT:-}"
 
 log() {
   printf '[OpenHouse] %s\n' "$*"
@@ -31,6 +32,9 @@ ensure_port() {
   if [ "$PORT" -lt 10000 ] || [ "$PORT" -gt 65535 ]; then
     log "端口必须是 10000 到 65535 的 5 位端口：$PORT"
     exit 2
+  fi
+  if [ -n "$REQUESTED_PORT" ]; then
+    printf '%s\n' "$PORT" > "$PORT_FILE"
   fi
 }
 
@@ -193,11 +197,20 @@ is_running() {
 }
 
 start_server() {
+  local previous_port=""
+  [ -f "$PORT_FILE" ] && previous_port="$(tr -d '[:space:]' < "$PORT_FILE" 2>/dev/null || true)"
   ensure_port
   write_server
   if is_running; then
-    log "本地网页维护器已运行：http://127.0.0.1:$PORT/"
-    return
+    if [ -n "$REQUESTED_PORT" ] && [ -n "$previous_port" ] && [ "$previous_port" != "$PORT" ]; then
+      log "本地网页维护器端口从 $previous_port 调整为 $PORT，正在重启。"
+      kill "$(cat "$PID_FILE")" || true
+      rm -f "$PID_FILE"
+      sleep 1
+    else
+      log "本地网页维护器已运行：http://127.0.0.1:$PORT/"
+      return
+    fi
   fi
   command -v python3 >/dev/null 2>&1 || {
     log "缺少 python3，正在安装。"
