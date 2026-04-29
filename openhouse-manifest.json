@@ -45,6 +45,18 @@
       "action": { "type": "bootstrap", "args": ["opencode"] }
     },
     {
+      "id": "install_codex",
+      "title": "安装 Codex",
+      "description": "在 Ubuntu 内通过 npm 安装 OpenAI Codex CLI。",
+      "action": { "type": "bootstrap", "args": ["codex"] }
+    },
+    {
+      "id": "install_claude_code",
+      "title": "安装 Claude Code",
+      "description": "在 Ubuntu 内通过 npm 安装 Anthropic Claude Code。",
+      "action": { "type": "bootstrap", "args": ["claude-code"] }
+    },
+    {
       "id": "install_system_env_skill",
       "title": "写入 Agent 技能",
       "description": "写入系统环境说明，以及 OpenCode、Codex、Claude Code 的安装登录配置说明。",

@@ -39,6 +39,8 @@ ensure_local_layout() {
     20-install-ubuntu.sh \
     30-update-ubuntu-packages.sh \
     40-install-opencode.sh \
+    42-install-codex.sh \
+    44-install-claude-code.sh \
     50-install-ai-agents-skill.sh \
     60-start-opencode.sh; do
     curl -fsSL "$OPENHOUSE_RAW_BASE/scripts/$name" -o "$OPENHOUSE_DIR/scripts/$name"
@@ -91,6 +93,8 @@ run_full_install() {
   run_stage 20-install-ubuntu.sh
   run_stage 30-update-ubuntu-packages.sh
   run_stage 40-install-opencode.sh
+  run_stage 42-install-codex.sh
+  run_stage 44-install-claude-code.sh
   run_stage 50-install-ai-agents-skill.sh
   run_stage 60-start-opencode.sh
 }
@@ -105,9 +109,11 @@ OpenHouse Installer
 4. 只安装 Ubuntu
 5. 只更新 Ubuntu 软件包
 6. 只安装 OpenCode
-7. 只写入 Agent skills
-8. 只启动 OpenCode
-9. 退出
+7. 只安装 Codex
+8. 只安装 Claude Code
+9. 只写入 Agent skills
+10. 只启动 OpenCode
+11. 退出
 
 当前端口：$OPENHOUSE_PORT
 EOF
@@ -142,6 +148,14 @@ main() {
       run_stage 40-install-opencode.sh
       return
       ;;
+    codex)
+      run_stage 42-install-codex.sh
+      return
+      ;;
+    claude-code)
+      run_stage 44-install-claude-code.sh
+      return
+      ;;
     skills)
       run_stage 50-install-ai-agents-skill.sh
       return
@@ -159,7 +173,7 @@ main() {
 
   while true; do
     show_menu
-    printf '请选择 [1-9]: '
+    printf '请选择 [1-11]: '
     read -r choice
     case "$choice" in
       1) run_full_install ;;
@@ -168,10 +182,12 @@ main() {
       4) run_stage 20-install-ubuntu.sh ;;
       5) run_stage 30-update-ubuntu-packages.sh ;;
       6) run_stage 40-install-opencode.sh ;;
-      7) run_stage 50-install-ai-agents-skill.sh ;;
-      8) run_stage 60-start-opencode.sh ;;
-      9) exit 0 ;;
-      *) log "请输入 1 到 9。" ;;
+      7) run_stage 42-install-codex.sh ;;
+      8) run_stage 44-install-claude-code.sh ;;
+      9) run_stage 50-install-ai-agents-skill.sh ;;
+      10) run_stage 60-start-opencode.sh ;;
+      11) exit 0 ;;
+      *) log "请输入 1 到 11。" ;;
     esac
   done
 }
