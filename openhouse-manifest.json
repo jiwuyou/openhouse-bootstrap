@@ -11,7 +11,7 @@
     {
       "id": "prepare",
       "title": "准备 Termux 环境",
-      "description": "创建产品文档和工作区，安装 curl、git、proot-distro，并写入 Termux 配置。",
+      "description": "创建产品文档和工作区，安装 curl、git、proot-distro，并应用启动入口配置。",
       "action": { "type": "bootstrap", "args": ["prepare"] }
     },
     {
@@ -29,7 +29,7 @@
     {
       "id": "sync_official_docs",
       "title": "写入产品路径",
-      "description": "保持产品文档和工作区路径可被 Ubuntu 内 Agent 识别。",
+      "description": "保持产品文档、工作区路径和启动入口配置可被后续阶段识别。",
       "action": { "type": "bootstrap", "args": ["prepare"] }
     },
     {

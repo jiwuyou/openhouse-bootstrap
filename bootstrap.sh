@@ -42,7 +42,8 @@ ensure_local_layout() {
     42-install-codex.sh \
     44-install-claude-code.sh \
     50-install-ai-agents-skill.sh \
-    60-start-opencode.sh; do
+    60-start-opencode.sh \
+    70-configure-entry.sh; do
     curl -fsSL "$OPENHOUSE_RAW_BASE/scripts/$name" -o "$OPENHOUSE_DIR/scripts/$name"
     chmod +x "$OPENHOUSE_DIR/scripts/$name"
   done
@@ -90,6 +91,7 @@ run_stage() {
 run_full_install() {
   run_stage 00-check-termux.sh
   run_stage 10-prepare-termux.sh
+  run_stage 70-configure-entry.sh apply
   run_stage 20-install-ubuntu.sh
   run_stage 30-update-ubuntu-packages.sh
   run_stage 40-install-opencode.sh
@@ -113,7 +115,10 @@ OpenHouse Installer
 8. 只安装 Claude Code
 9. 只写入 Agent skills
 10. 只启动 OpenCode
-11. 退出
+11. 启动入口：打开 Termux 后直接进入 Ubuntu
+12. 启动入口：打开 Termux 后停留在 Termux
+13. 查看启动入口设置
+14. 退出
 
 当前端口：$OPENHOUSE_PORT
 EOF
@@ -134,6 +139,7 @@ main() {
       ;;
     prepare)
       run_stage 10-prepare-termux.sh
+      run_stage 70-configure-entry.sh apply
       return
       ;;
     ubuntu)
@@ -164,6 +170,18 @@ main() {
       run_stage 60-start-opencode.sh
       return
       ;;
+    entry-ubuntu)
+      run_stage 70-configure-entry.sh ubuntu
+      return
+      ;;
+    entry-termux)
+      run_stage 70-configure-entry.sh termux
+      return
+      ;;
+    entry-status)
+      run_stage 70-configure-entry.sh status
+      return
+      ;;
     ""|menu)
       ;;
     *)
@@ -173,7 +191,7 @@ main() {
 
   while true; do
     show_menu
-    printf '请选择 [1-11]: '
+    printf '请选择 [1-14]: '
     read -r choice
     case "$choice" in
       1) run_full_install ;;
@@ -186,8 +204,11 @@ main() {
       8) run_stage 44-install-claude-code.sh ;;
       9) run_stage 50-install-ai-agents-skill.sh ;;
       10) run_stage 60-start-opencode.sh ;;
-      11) exit 0 ;;
-      *) log "请输入 1 到 11。" ;;
+      11) run_stage 70-configure-entry.sh ubuntu ;;
+      12) run_stage 70-configure-entry.sh termux ;;
+      13) run_stage 70-configure-entry.sh status ;;
+      14) exit 0 ;;
+      *) log "请输入 1 到 14。" ;;
     esac
   done
 }
