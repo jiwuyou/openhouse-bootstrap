@@ -43,7 +43,8 @@ ensure_local_layout() {
     44-install-claude-code.sh \
     50-install-ai-agents-skill.sh \
     60-start-opencode.sh \
-    70-configure-entry.sh; do
+    70-configure-entry.sh \
+    80-openhouse-web.sh; do
     curl -fsSL "$OPENHOUSE_RAW_BASE/scripts/$name" -o "$OPENHOUSE_DIR/scripts/$name"
     chmod +x "$OPENHOUSE_DIR/scripts/$name"
   done
@@ -118,7 +119,10 @@ OpenHouse Installer
 11. 启动入口：打开 Termux 后直接进入 Ubuntu
 12. 启动入口：打开 Termux 后停留在 Termux
 13. 查看启动入口设置
-14. 退出
+14. 启动本地网页维护器
+15. 停止本地网页维护器
+16. 查看本地网页维护器状态
+17. 退出
 
 当前端口：$OPENHOUSE_PORT
 EOF
@@ -182,6 +186,18 @@ main() {
       run_stage 70-configure-entry.sh status
       return
       ;;
+    web|web-start)
+      run_stage 80-openhouse-web.sh start
+      return
+      ;;
+    web-stop)
+      run_stage 80-openhouse-web.sh stop
+      return
+      ;;
+    web-status)
+      run_stage 80-openhouse-web.sh status
+      return
+      ;;
     ""|menu)
       ;;
     *)
@@ -191,7 +207,7 @@ main() {
 
   while true; do
     show_menu
-    printf '请选择 [1-14]: '
+    printf '请选择 [1-17]: '
     read -r choice
     case "$choice" in
       1) run_full_install ;;
@@ -207,8 +223,11 @@ main() {
       11) run_stage 70-configure-entry.sh ubuntu ;;
       12) run_stage 70-configure-entry.sh termux ;;
       13) run_stage 70-configure-entry.sh status ;;
-      14) exit 0 ;;
-      *) log "请输入 1 到 14。" ;;
+      14) run_stage 80-openhouse-web.sh start ;;
+      15) run_stage 80-openhouse-web.sh stop ;;
+      16) run_stage 80-openhouse-web.sh status ;;
+      17) exit 0 ;;
+      *) log "请输入 1 到 17。" ;;
     esac
   done
 }
