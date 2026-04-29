@@ -7,6 +7,38 @@
   "bootstrapUrl": "https://raw.githubusercontent.com/jiwuyou/openhouse-bootstrap/main/bootstrap.sh",
   "defaultOneClickAction": "full",
   "allowedHosts": ["raw.githubusercontent.com"],
+  "sections": [
+    {
+      "id": "startup_entry",
+      "type": "setting",
+      "title": "启动入口设置",
+      "description": "控制打开 Termux 后默认停在 Termux，还是自动进入 Ubuntu。阶段执行会应用这个配置。",
+      "items": [
+        {
+          "id": "entry_mode",
+          "type": "single_choice",
+          "label": "打开 Termux 后",
+          "options": [
+            {
+              "label": "直接进入 Ubuntu",
+              "description": "写入启动入口配置；下次打开 Termux 自动进入 Ubuntu。",
+              "action": { "type": "bootstrap", "args": ["entry-ubuntu"] }
+            },
+            {
+              "label": "停留在 Termux",
+              "description": "写入启动入口配置；下次打开 Termux 停留在原生 Termux。",
+              "action": { "type": "bootstrap", "args": ["entry-termux"] }
+            },
+            {
+              "label": "查看当前设置",
+              "description": "显示当前启动入口模式和配置文件路径。",
+              "action": { "type": "bootstrap", "args": ["entry-status"] }
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "stages": [
     {
       "id": "prepare",
