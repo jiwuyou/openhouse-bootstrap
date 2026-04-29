@@ -30,7 +30,18 @@ fi
 
 log "正在安装 Termux 基础包。"
 run_logged pkg update -y
-run_logged pkg install -y proot-distro curl ca-certificates git
+run_logged pkg install -y proot-distro curl libcurl libngtcp2 libnghttp2 openssl ca-certificates git
+
+if ! curl --version >/dev/null 2>&1; then
+  log "curl 仍不可用，尝试完整升级 Termux 依赖。"
+  run_logged pkg upgrade -y
+  run_logged pkg install -y curl libcurl libngtcp2 libnghttp2 openssl ca-certificates
+fi
+
+if ! curl --version >/dev/null 2>&1; then
+  log "curl 修复失败，请手动执行：pkg upgrade -y && pkg install -y curl libcurl libngtcp2 libnghttp2 openssl ca-certificates"
+  exit 1
+fi
 
 cat > "$DOC_DIR/README.md" <<'EOF'
 # Product Docs

@@ -15,6 +15,11 @@ die() {
   exit 1
 }
 
+run_logged() {
+  log "+ $*"
+  "$@"
+}
+
 is_termux() {
   [ -n "${PREFIX:-}" ] && [ -d "${PREFIX:-}/bin" ] && [ -d "/data/data/com.termux/files" ]
 }
@@ -30,7 +35,7 @@ ensure_local_layout() {
     return 0
   fi
 
-  command -v curl >/dev/null 2>&1 || die "缺少 curl，请先运行：pkg install -y curl"
+  ensure_termux_curl
 
   log "正在从 $OPENHOUSE_RAW_BASE 下载阶段脚本"
   for name in \
@@ -56,6 +61,23 @@ ensure_local_layout() {
     -o "$OPENHOUSE_DIR/skills/system-environment-description/SKILL.md"
   curl -fsSL "$OPENHOUSE_RAW_BASE/skills/install-ai-agents/SKILL.md" \
     -o "$OPENHOUSE_DIR/skills/install-ai-agents/SKILL.md"
+}
+
+ensure_termux_curl() {
+  if command -v curl >/dev/null 2>&1 && curl --version >/dev/null 2>&1; then
+    return 0
+  fi
+
+  is_termux || die "curl 不可用，且当前不是 Termux，无法自动修复。"
+  command -v pkg >/dev/null 2>&1 || die "curl 不可用，且缺少 pkg，无法自动修复。"
+
+  log "curl 不可用，正在修复 Termux 网络依赖。"
+  run_logged pkg update -y || true
+  run_logged pkg install -y curl libcurl libngtcp2 libnghttp2 openssl ca-certificates
+
+  if ! curl --version >/dev/null 2>&1; then
+    die "curl 修复失败，请先执行：pkg upgrade -y && pkg install -y curl libcurl libngtcp2 libnghttp2 openssl ca-certificates"
+  fi
 }
 
 script_path() {
