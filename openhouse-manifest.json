@@ -19,6 +19,11 @@
       "stages": ["ubuntu_packages"]
     },
     {
+      "title": "设置启动入口",
+      "description": "打开 Termux 后直接进入 Ubuntu，放在安装 OpenCode 之前执行。",
+      "stages": ["entry_ubuntu"]
+    },
+    {
       "title": "启动 OpenCode",
       "description": "安装 OpenCode 并启动 4096 端口，让 OpenCode 接手后续 AI 配置。",
       "stages": ["install_opencode", "install_system_env_skill", "start"]
@@ -115,6 +120,12 @@
       "title": "更新 Ubuntu 软件包",
       "description": "在 Ubuntu 内安装 curl、git、证书、procps、ripgrep 和 unzip。",
       "action": { "type": "bootstrap", "args": ["ubuntu-packages"] }
+    },
+    {
+      "id": "entry_ubuntu",
+      "title": "启动后直接进入 Ubuntu",
+      "description": "写入启动入口配置；下次打开 Termux 自动进入 Ubuntu。",
+      "action": { "type": "bootstrap", "args": ["entry-ubuntu"] }
     },
     {
       "id": "install_opencode",
