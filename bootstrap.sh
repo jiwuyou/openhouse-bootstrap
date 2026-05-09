@@ -69,6 +69,7 @@ ensure_local_layout() {
     42-install-codex.sh \
     44-install-claude-code.sh \
     50-install-ai-agents-skill.sh \
+    55-install-required-components.sh \
     60-start-opencode.sh \
     70-configure-entry.sh \
     80-openhouse-web.sh; do
@@ -147,6 +148,7 @@ run_full_install() {
   run_stage 42-install-codex.sh
   run_stage 44-install-claude-code.sh
   run_stage 50-install-ai-agents-skill.sh
+  run_stage 55-install-required-components.sh
   run_stage 60-start-opencode.sh
 }
 
@@ -163,14 +165,15 @@ OpenHouse Installer
 7. 只安装 Codex
 8. 只安装 Claude Code
 9. 只写入 Agent skills
-10. 只启动 OpenCode
-11. 启动入口：打开 Termux 后直接进入 Ubuntu
-12. 启动入口：打开 Termux 后停留在 Termux
-13. 查看启动入口设置
-14. 启动本地网页维护器
-15. 停止本地网页维护器
-16. 查看本地网页维护器状态
-17. 退出
+10. 安装 OpenHouse 必要组件
+11. 只启动 OpenCode
+12. 启动入口：打开 Termux 后直接进入 Ubuntu
+13. 启动入口：打开 Termux 后停留在 Termux
+14. 查看启动入口设置
+15. 启动本地网页维护器
+16. 停止本地网页维护器
+17. 查看本地网页维护器状态
+18. 退出
 
 当前端口：$OPENHOUSE_PORT
 EOF
@@ -218,6 +221,10 @@ main() {
       run_stage 50-install-ai-agents-skill.sh
       return
       ;;
+    required-components|runtime-components|components)
+      run_stage 55-install-required-components.sh
+      return
+      ;;
     start)
       run_stage 60-start-opencode.sh
       return
@@ -255,7 +262,7 @@ main() {
 
   while true; do
     show_menu
-    printf '请选择 [1-17]: '
+    printf '请选择 [1-18]: '
     read -r choice
     case "$choice" in
       1) run_full_install ;;
@@ -267,15 +274,16 @@ main() {
       7) run_stage 42-install-codex.sh ;;
       8) run_stage 44-install-claude-code.sh ;;
       9) run_stage 50-install-ai-agents-skill.sh ;;
-      10) run_stage 60-start-opencode.sh ;;
-      11) run_stage 70-configure-entry.sh ubuntu ;;
-      12) run_stage 70-configure-entry.sh termux ;;
-      13) run_stage 70-configure-entry.sh status ;;
-      14) run_stage 80-openhouse-web.sh start ;;
-      15) run_stage 80-openhouse-web.sh stop ;;
-      16) run_stage 80-openhouse-web.sh status ;;
-      17) exit 0 ;;
-      *) log "请输入 1 到 17。" ;;
+      10) run_stage 55-install-required-components.sh ;;
+      11) run_stage 60-start-opencode.sh ;;
+      12) run_stage 70-configure-entry.sh ubuntu ;;
+      13) run_stage 70-configure-entry.sh termux ;;
+      14) run_stage 70-configure-entry.sh status ;;
+      15) run_stage 80-openhouse-web.sh start ;;
+      16) run_stage 80-openhouse-web.sh stop ;;
+      17) run_stage 80-openhouse-web.sh status ;;
+      18) exit 0 ;;
+      *) log "请输入 1 到 18。" ;;
     esac
   done
 }

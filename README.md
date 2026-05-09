@@ -36,6 +36,7 @@ bash bootstrap.sh opencode
 bash bootstrap.sh codex
 bash bootstrap.sh claude-code
 bash bootstrap.sh skills
+bash bootstrap.sh required-components
 bash bootstrap.sh start
 ```
 

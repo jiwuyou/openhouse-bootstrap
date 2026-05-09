@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "version": "2026.04.29.1",
+  "version": "2026.05.09.1",
   "title": "OpenHouse 维护器",
   "sourceName": "OpenHouse 官方维护源",
-  "updatedAt": "2026-04-29",
+  "updatedAt": "2026-05-09",
   "bootstrapUrl": "https://raw.githubusercontent.com/jiwuyou/openhouse-bootstrap/main/bootstrap.sh",
   "defaultOneClickAction": "full",
   "allowedHosts": ["raw.githubusercontent.com"],
@@ -25,8 +25,18 @@
     },
     {
       "title": "安装并启动 AI 工具",
-      "description": "安装 OpenCode、Codex、Claude Code，写入 Agent 技能，并启动 4096 端口。",
-      "stages": ["install_opencode", "install_codex", "install_claude_code", "install_system_env_skill", "start"]
+      "description": "安装 OpenCode、Codex、Claude Code，并写入 Agent 技能。",
+      "stages": ["install_opencode", "install_codex", "install_claude_code", "install_system_env_skill"]
+    },
+    {
+      "title": "安装 OpenHouse 必要组件",
+      "description": "调用各子仓库自己的 install/check/register 脚本，安装 service-manager、cc-connect、cc-proxy、SmallPhone 等组件。",
+      "stages": ["install_required_components"]
+    },
+    {
+      "title": "启动 OpenCode",
+      "description": "完成必要组件后启动 OpenCode 网页服务。",
+      "stages": ["start"]
     }
   ],
   "sections": [
@@ -150,6 +160,12 @@
       "title": "写入 Agent 技能",
       "description": "写入系统环境说明，以及 OpenCode、Codex、Claude Code 的安装登录配置说明。",
       "action": { "type": "bootstrap", "args": ["skills"] }
+    },
+    {
+      "id": "install_required_components",
+      "title": "安装 OpenHouse 必要组件",
+      "description": "调用各子仓库自己的安装、检查和 service-manager 注册入口。",
+      "action": { "type": "bootstrap", "args": ["required-components"] }
     },
     {
       "id": "start",
