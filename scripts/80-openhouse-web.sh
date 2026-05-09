@@ -16,6 +16,14 @@ log() {
   printf '[OpenHouse] %s\n' "$*"
 }
 
+is_current_ubuntu() {
+  [ -f /etc/os-release ] && grep -qi '^ID=ubuntu' /etc/os-release
+}
+
+is_termux() {
+  [ -n "${PREFIX:-}" ] && [ -d "${PREFIX:-}/bin" ] && [ -d "/data/data/com.termux/files" ]
+}
+
 ensure_port() {
   mkdir -p "$OPENHOUSE_DIR"
   if [ -z "$PORT" ]; then
@@ -196,6 +204,38 @@ is_running() {
   [ -n "$pid" ] && kill -0 "$pid" >/dev/null 2>&1
 }
 
+ensure_python() {
+  PYTHON_BIN=""
+  PYTHON_ENV_MODE="default"
+
+  if is_current_ubuntu; then
+    if [ ! -x /usr/bin/python3 ]; then
+      log "Ubuntu 内缺少 python3，正在安装。"
+      apt update
+      DEBIAN_FRONTEND=noninteractive apt install -y python3
+    fi
+    PYTHON_BIN="/usr/bin/python3"
+    PYTHON_ENV_MODE="ubuntu"
+    return
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python3)"
+    return
+  fi
+
+  if is_termux; then
+    log "缺少 python3，正在安装。"
+    pkg update -y
+    pkg install -y python
+    PYTHON_BIN="$(command -v python3)"
+    return
+  fi
+
+  log "缺少 python3，且当前环境无法自动安装。"
+  exit 3
+}
+
 start_server() {
   local previous_port=""
   [ -f "$PORT_FILE" ] && previous_port="$(tr -d '[:space:]' < "$PORT_FILE" 2>/dev/null || true)"
@@ -212,12 +252,17 @@ start_server() {
       return
     fi
   fi
-  command -v python3 >/dev/null 2>&1 || {
-    log "缺少 python3，正在安装。"
-    pkg update -y
-    pkg install -y python
-  }
-  nohup env HOME="$TERMUX_HOME" OPENHOUSE_WEB_PORT="$PORT" python3 "$SERVER_FILE" > "$LOG_FILE" 2>&1 &
+  ensure_python
+  log "使用 Python：$PYTHON_BIN"
+  if [ "$PYTHON_ENV_MODE" = "ubuntu" ]; then
+    nohup env -u LD_LIBRARY_PATH \
+      HOME="$TERMUX_HOME" \
+      OPENHOUSE_WEB_PORT="$PORT" \
+      PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+      "$PYTHON_BIN" "$SERVER_FILE" > "$LOG_FILE" 2>&1 &
+  else
+    nohup env HOME="$TERMUX_HOME" OPENHOUSE_WEB_PORT="$PORT" "$PYTHON_BIN" "$SERVER_FILE" > "$LOG_FILE" 2>&1 &
+  fi
   echo "$!" > "$PID_FILE"
   sleep 1
   if is_running; then
