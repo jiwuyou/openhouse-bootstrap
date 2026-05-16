@@ -10,11 +10,117 @@ run_logged() {
   "$@"
 }
 
+is_termux() {
+  [ -n "${PREFIX:-}" ] && [ -d "${PREFIX:-}/bin" ] && [ -d "/data/data/com.termux/files" ]
+}
+
+is_current_ubuntu() {
+  [ -f /etc/os-release ] && grep -qi '^ID=ubuntu' /etc/os-release
+}
+
+detect_openhouse_runtime() {
+  if is_current_ubuntu; then
+    printf 'ubuntu'
+    return 0
+  fi
+
+  if [ -x "${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe" ]; then
+    "${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe" 2>/dev/null \
+      | awk -F= '$1=="OPENHOUSE_RUNTIME"{print $2; found=1} END{if(!found) exit 1}' \
+      && return 0
+  fi
+
+  if is_termux; then
+    printf 'termux'
+    return 0
+  fi
+
+  printf 'unknown'
+}
+
+run_environment_probe() {
+  local probe="${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe"
+  if [ -x "$probe" ]; then
+    log "正在执行环境探测命令：$probe"
+    run_logged "$probe" || true
+  else
+    log "环境探测命令不存在，使用内置探测逻辑。"
+  fi
+  log "当前运行环境：$(detect_openhouse_runtime)"
+}
+
+run_environment_probe
+
+if ! is_termux; then
+  log "Termux 准备阶段只能在 Termux 外层运行。当前运行环境：$(detect_openhouse_runtime)"
+  exit 2
+fi
+
 TERMUX_HOME="${HOME:-/data/data/com.termux/files/home}"
+TERMUX_PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+TERMUX_BIN_DIR="$TERMUX_PREFIX/bin"
+ENV_PROBE_COMMAND="$TERMUX_BIN_DIR/openhouse-env-probe"
 DOC_DIR="$TERMUX_HOME/product-docs"
 WORKSPACE_DIR="$TERMUX_HOME/workspace"
 TERMUX_CONFIG_DIR="$TERMUX_HOME/.termux"
 TERMUX_PROPERTIES_FILE="$TERMUX_CONFIG_DIR/termux.properties"
+
+install_env_probe_cli() {
+  if [ -x "$ENV_PROBE_COMMAND" ]; then
+    log "环境探测 CLI 已存在：$ENV_PROBE_COMMAND"
+    return 0
+  fi
+
+  mkdir -p "$TERMUX_BIN_DIR"
+  cat > "$ENV_PROBE_COMMAND" <<'EOF'
+#!/data/data/com.termux/files/usr/bin/env bash
+set -euo pipefail
+
+INSTALL_SIDE="termux"
+
+detect_runtime() {
+  if [ -r /etc/os-release ] && grep -qi 'ubuntu' /etc/os-release; then
+    printf 'ubuntu'
+    return 0
+  fi
+
+  if [ -n "${TERMUX_VERSION:-}" ] || [ "${PREFIX:-}" = "/data/data/com.termux/files/usr" ]; then
+    printf 'termux'
+    return 0
+  fi
+
+  printf 'unknown'
+}
+
+detect_ubuntu_rootfs() {
+  case "$(detect_runtime)" in
+    ubuntu)
+      printf 'installed'
+      ;;
+    termux)
+      if command -v proot-distro >/dev/null 2>&1 && proot-distro login ubuntu -- true >/dev/null 2>&1; then
+        printf 'installed'
+      else
+        printf 'missing'
+      fi
+      ;;
+    *)
+      printf 'unknown'
+      ;;
+  esac
+}
+
+main() {
+  printf 'OPENHOUSE_INSTALL_SIDE=%s\n' "$INSTALL_SIDE"
+  printf 'OPENHOUSE_RUNTIME=%s\n' "$(detect_runtime)"
+  printf 'OPENHOUSE_UBUNTU_ROOTFS=%s\n' "$(detect_ubuntu_rootfs)"
+}
+
+main "$@"
+EOF
+  chmod 755 "$ENV_PROBE_COMMAND"
+  log "已注入环境探测 CLI：$ENV_PROBE_COMMAND"
+}
 
 log "正在确保基础目录存在。"
 mkdir -p "$DOC_DIR" "$WORKSPACE_DIR" "$TERMUX_CONFIG_DIR"
@@ -68,6 +174,8 @@ Rules:
 - Keep generated artifacts organized and explain what was changed.
 - Do not write provider API keys into tracked files or shared docs.
 EOF
+
+install_env_probe_cli
 
 log "文档路径：$DOC_DIR"
 log "工作区路径：$WORKSPACE_DIR"

@@ -16,12 +16,48 @@ log() {
   printf '[OpenHouse] %s\n' "$*"
 }
 
+run_logged() {
+  log "+ $*"
+  "$@"
+}
+
 is_current_ubuntu() {
   [ -f /etc/os-release ] && grep -qi '^ID=ubuntu' /etc/os-release
 }
 
 is_termux() {
   [ -n "${PREFIX:-}" ] && [ -d "${PREFIX:-}/bin" ] && [ -d "/data/data/com.termux/files" ]
+}
+
+detect_openhouse_runtime() {
+  if is_current_ubuntu; then
+    printf 'ubuntu'
+    return 0
+  fi
+
+  if [ -x "${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe" ]; then
+    "${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe" 2>/dev/null \
+      | awk -F= '$1=="OPENHOUSE_RUNTIME"{print $2; found=1} END{if(!found) exit 1}' \
+      && return 0
+  fi
+
+  if is_termux; then
+    printf 'termux'
+    return 0
+  fi
+
+  printf 'unknown'
+}
+
+run_environment_probe() {
+  local probe="${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe"
+  if [ -x "$probe" ]; then
+    log "正在执行环境探测命令：$probe"
+    run_logged "$probe" || true
+  else
+    log "环境探测命令不存在，使用内置探测逻辑。"
+  fi
+  log "当前运行环境：$(detect_openhouse_runtime)"
 }
 
 ensure_port() {
@@ -294,6 +330,12 @@ status_server() {
   log "端口配置：$PORT_FILE"
   log "服务日志：$LOG_FILE"
 }
+
+case "$MODE" in
+  *)
+    run_environment_probe
+    ;;
+esac
 
 case "$MODE" in
   start|web-start) start_server ;;

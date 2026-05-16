@@ -42,6 +42,37 @@ is_current_ubuntu() {
   [ -f /etc/os-release ] && grep -qi '^ID=ubuntu' /etc/os-release
 }
 
+detect_openhouse_runtime() {
+  if is_current_ubuntu; then
+    printf 'ubuntu'
+    return 0
+  fi
+
+  if [ -x "${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe" ]; then
+    "${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe" 2>/dev/null \
+      | awk -F= '$1=="OPENHOUSE_RUNTIME"{print $2; found=1} END{if(!found) exit 1}' \
+      && return 0
+  fi
+
+  if is_termux; then
+    printf 'termux'
+    return 0
+  fi
+
+  printf 'unknown'
+}
+
+run_environment_probe() {
+  local probe="${PREFIX:-/data/data/com.termux/files/usr}/bin/openhouse-env-probe"
+  if [ -x "$probe" ]; then
+    log "正在执行环境探测命令：$probe"
+    run_logged "$probe" || true
+  else
+    log "环境探测命令不存在，使用内置探测逻辑。"
+  fi
+  log "当前运行环境：$(detect_openhouse_runtime)"
+}
+
 ensure_termux() {
   is_termux || die "请在官方 Termux 内运行，不要在 Android adb shell 或普通 Linux 主机运行。"
 }
@@ -134,6 +165,7 @@ run_stage() {
   [ -f "$path" ] || die "缺少阶段脚本：$path"
   chmod +x "$path"
   log "开始：$name"
+  run_environment_probe
   OPENHOUSE_PORT="$OPENHOUSE_PORT" OPENHOUSE_ROOT="$root" bash "$path" "$@"
   log "完成：$name"
 }
