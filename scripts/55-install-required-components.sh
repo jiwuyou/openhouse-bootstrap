@@ -63,6 +63,8 @@ if is_termux && [ "${OPENHOUSE_REQUIRED_COMPONENTS_IN_UBUNTU:-1}" = "1" ]; then
         OPENHOUSE_COMPONENT_REPO_ROOT="${OPENHOUSE_COMPONENT_REPO_ROOT:-/root/openhouse-repos}" \
         OPENHOUSE_COMPONENTS_AUTO_CLONE="${OPENHOUSE_COMPONENTS_AUTO_CLONE:-1}" \
         OPENHOUSE_COMPONENTS_STRICT="${OPENHOUSE_COMPONENTS_STRICT:-1}" \
+        OPENHOUSE_REQUIRED_COMPONENT_TARGETS="${OPENHOUSE_REQUIRED_COMPONENT_TARGETS:-}" \
+        OPENHOUSE_INSTALL_DOC_COMPONENTS="${OPENHOUSE_INSTALL_DOC_COMPONENTS:-0}" \
         bash -s < "$0"
     exit $?
   fi
@@ -74,7 +76,53 @@ export PATH="$HOME/.local/node/bin:$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
 repo_root="${OPENHOUSE_COMPONENT_REPO_ROOT:-$HOME/openhouse-repos}"
 auto_clone="${OPENHOUSE_COMPONENTS_AUTO_CLONE:-1}"
 strict="${OPENHOUSE_COMPONENTS_STRICT:-1}"
+component_targets="${OPENHOUSE_REQUIRED_COMPONENT_TARGETS:-}"
 failures=0
+
+should_run_component() {
+  local target="$1"
+  if [ -z "$component_targets" ]; then
+    return 0
+  fi
+
+  case ",$component_targets," in
+    *,"$target",*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+validate_component_targets() {
+  local target rest
+  rest="$component_targets"
+  [ -n "$rest" ] || return 0
+
+  while [ -n "$rest" ]; do
+    case "$rest" in
+      *,*)
+        target="${rest%%,*}"
+        rest="${rest#*,}"
+        ;;
+      *)
+        target="$rest"
+        rest=""
+        ;;
+    esac
+
+    [ -n "$target" ] || continue
+    case "$target" in
+      service-manager|cc-connect|cc-proxy|openhouse-key-tool|smallphone|openhouse-app-guide-site|openhouse-docs)
+        ;;
+      *)
+        warn "未知组件目标：$target"
+        failures=$((failures + 1))
+        ;;
+    esac
+  done
+}
 
 default_path() {
   local dev_path="$1"
@@ -172,18 +220,42 @@ docs_dir="${OPENHOUSE_DOCS_DIR:-$(default_path /root/openhouse-docs openhouse-do
 
 log "OpenHouse 必要组件安装入口由各子仓库维护。"
 log "组件仓库根目录：$repo_root"
+if [ -n "$component_targets" ]; then
+  log "本次仅安装指定组件：$component_targets"
+else
+  log "本次安装默认必要组件集合。"
+fi
+
+validate_component_targets
 
 service_manager_required="${OPENHOUSE_SERVICE_MANAGER_REQUIRED:-1}"
 if [ "$service_manager_required" != "1" ]; then
   log "service-manager 当前按可选组件处理；如需默认必装，请恢复 OPENHOUSE_SERVICE_MANAGER_REQUIRED=1。"
 fi
-run_component "service-manager" "$service_manager_dir" "${OPENHOUSE_SERVICE_MANAGER_GIT_URL:-https://github.com/jiwuyou/service-manager.git}" "$service_manager_required"
-run_component "cc-connect" "$cc_connect_dir" "${OPENHOUSE_CC_CONNECT_GIT_URL:-https://github.com/jiwuyou/openhouse-connect.git}" "1"
-run_component "cc-proxy" "$cc_proxy_dir" "${OPENHOUSE_CC_PROXY_GIT_URL:-https://github.com/jiwuyou/cc-proxy.git}" "1"
-run_component "openhouse-key-tool" "$key_tool_dir" "${OPENHOUSE_KEY_TOOL_GIT_URL:-https://github.com/jiwuyou/openhouse-key-tool.git}" "1"
-run_component "smallphone" "$smallphone_dir" "${OPENHOUSE_SMALLPHONE_GIT_URL:-https://github.com/jiwuyou/wuxian-smallphone.git}" "1"
+if should_run_component "service-manager"; then
+  run_component "service-manager" "$service_manager_dir" "${OPENHOUSE_SERVICE_MANAGER_GIT_URL:-https://github.com/jiwuyou/service-manager.git}" "$service_manager_required"
+fi
+if should_run_component "cc-connect"; then
+  run_component "cc-connect" "$cc_connect_dir" "${OPENHOUSE_CC_CONNECT_GIT_URL:-https://github.com/jiwuyou/openhouse-connect.git}" "1"
+fi
+if should_run_component "cc-proxy"; then
+  run_component "cc-proxy" "$cc_proxy_dir" "${OPENHOUSE_CC_PROXY_GIT_URL:-https://github.com/jiwuyou/cc-proxy.git}" "1"
+fi
+if should_run_component "openhouse-key-tool"; then
+  run_component "openhouse-key-tool" "$key_tool_dir" "${OPENHOUSE_KEY_TOOL_GIT_URL:-https://github.com/jiwuyou/openhouse-key-tool.git}" "1"
+fi
+if should_run_component "smallphone"; then
+  run_component "smallphone" "$smallphone_dir" "${OPENHOUSE_SMALLPHONE_GIT_URL:-https://github.com/jiwuyou/wuxian-smallphone.git}" "1"
+fi
 
-if [ "${OPENHOUSE_INSTALL_DOC_COMPONENTS:-0}" = "1" ]; then
+if [ -n "$component_targets" ]; then
+  if should_run_component "openhouse-app-guide-site"; then
+    run_component "openhouse-app-guide-site" "$guide_site_dir" "${OPENHOUSE_GUIDE_SITE_GIT_URL:-https://github.com/jiwuyou/openhouse-app-guide-site.git}" "0"
+  fi
+  if should_run_component "openhouse-docs"; then
+    run_component "openhouse-docs" "$docs_dir" "${OPENHOUSE_DOCS_GIT_URL:-https://github.com/jiwuyou/openhouse-docs.git}" "0"
+  fi
+elif [ "${OPENHOUSE_INSTALL_DOC_COMPONENTS:-0}" = "1" ]; then
   log "OPENHOUSE_INSTALL_DOC_COMPONENTS=1，安装/检查文档和说明站组件。"
   run_component "openhouse-app-guide-site" "$guide_site_dir" "${OPENHOUSE_GUIDE_SITE_GIT_URL:-https://github.com/jiwuyou/openhouse-app-guide-site.git}" "0"
   run_component "openhouse-docs" "$docs_dir" "${OPENHOUSE_DOCS_GIT_URL:-https://github.com/jiwuyou/openhouse-docs.git}" "0"
