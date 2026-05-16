@@ -176,6 +176,7 @@ run_full_install() {
   run_stage 70-configure-entry.sh apply
   run_stage 20-install-ubuntu.sh
   run_stage 30-update-ubuntu-packages.sh
+  run_stage 70-configure-entry.sh ubuntu
   run_stage 40-install-opencode.sh
   run_stage 42-install-codex.sh
   run_stage 44-install-claude-code.sh
